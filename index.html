@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mes jeux vidéo</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #E8EBF1;
+  --surface: #FFFFFF;
+  --ink: #1D2033;
+  --muted: #5D6378;
+  --line: #D3D8E3;
+  --accent: #2F3A8F;
+  --tag: #F2C14E;
+  --tag-ink: #2A2100;
+  --hover: #F3F5F9;
+  --alerte: #B4232A;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151824; --surface: #1F2333; --ink: #E6E8F0; --muted: #9AA0B4;
+    --line: #2E3347; --accent: #A5AEFF; --hover: #272C40; --alerte: #FF8F8F;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151824; --surface: #1F2333; --ink: #E6E8F0; --muted: #9AA0B4;
+  --line: #2E3347; --accent: #A5AEFF; --hover: #272C40; --alerte: #FF8F8F;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.5 var(--body);
+}
+img { max-width: 100%; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.page { max-width: 1360px; margin: 0 auto; padding: 32px 20px 64px; }
+
+/* En-tête */
+header h1 {
+  font: 800 clamp(2.2rem, 6vw, 3.6rem)/1 var(--display);
+  letter-spacing: -0.02em; margin: 0 0 6px;
+}
+header p { margin: 0; color: var(--muted); }
+
+/* L'étagère : répartition par marque, cliquable */
+.etagere { margin: 28px 0 8px; }
+.etagere-barre {
+  display: flex; height: 44px; border-radius: 6px; overflow: hidden;
+  background: var(--line);
+}
+.etagere-barre button {
+  border: 0; padding: 0; cursor: pointer; min-width: 4px;
+  background: var(--c); position: relative;
+  transition: filter .15s, opacity .15s;
+}
+.etagere-barre button:hover { filter: brightness(1.12); }
+.etagere-barre.filtre button:not([aria-pressed="true"]) { opacity: .28; }
+.legende { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; font-size: .9rem; color: var(--muted); }
+.legende button {
+  background: none; border: 0; padding: 2px 0; cursor: pointer; color: var(--muted);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.legende button[aria-pressed="true"] { color: var(--ink); font-weight: 700; }
+.legende i { width: 10px; height: 10px; border-radius: 2px; background: var(--c); display: inline-block; }
+
+/* Onglets des listes */
+.onglets {
+  display: flex; gap: 6px; overflow-x: auto; margin: 28px 0 16px;
+  padding-bottom: 4px; scrollbar-width: thin;
+}
+.onglets button {
+  flex: none; border: 1px solid var(--line); background: var(--surface);
+  border-radius: 999px; padding: 8px 14px; cursor: pointer; white-space: nowrap;
+}
+.onglets button[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.onglets b {
+  font-weight: 700; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  background: var(--hover); font-size: .85rem;
+}
+.onglets button[aria-selected="true"] b { background: var(--tag); color: var(--tag-ink); }
+
+/* Filtres */
+.filtres {
+  display: grid; gap: 10px;
+  grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(140px, 1fr));
+  align-items: end;
+}
+.filtres label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+.filtres input[type="search"], .filtres select {
+  width: 100%; height: 42px; padding: 0 10px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--surface);
+}
+.options { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-top: 12px; font-size: .95rem; }
+.options label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.options .compteur { margin-left: auto; color: var(--muted); }
+.lien {
+  background: none; border: 0; padding: 0; color: var(--accent);
+  text-decoration: underline; cursor: pointer;
+}
+
+/* Liste des jeux */
+.tableau { margin-top: 18px; background: var(--surface); border-radius: 10px; border: 1px solid var(--line); }
+.liste { list-style: none; margin: 0; padding: 0; }
+.jeu, .entete-liste {
+  --cols: 6px 150px 36px minmax(200px, 1fr) repeat(5, 104px) 110px;
+}
+.entete-liste {
+  display: grid; gap: 14px; grid-template-columns: var(--cols);
+  padding: 10px 14px 10px 0; font-size: .85rem; color: var(--muted);
+  border-bottom: 1px solid var(--line); background: var(--surface);
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; border-radius: 10px 10px 0 0;
+}
+.etats { display: contents; }
+.etat { font-size: .85rem; line-height: 1.3; }
+.etat.top { font-weight: 700; }
+.etat.alerte { color: var(--alerte); font-weight: 700; }
+@media (max-width: 1150px) and (min-width: 761px) {
+  .tableau { overflow-x: auto; }
+  .entete-liste, .liste { min-width: 1060px; }
+  .entete-liste { position: static; }
+}
+.liste li + li { border-top: 1px solid var(--line); }
+.jeu {
+  width: 100%; display: grid; align-items: center; gap: 14px;
+  grid-template-columns: var(--cols);
+  padding: 8px 14px 8px 0; border: 0; background: none; text-align: left; cursor: pointer;
+}
+.jeu:hover { background: var(--hover); }
+.tranche { align-self: stretch; background: var(--c); margin: -8px 0; }
+.col-console { font-size: .9rem; color: var(--muted); line-height: 1.3; }
+.vignette {
+  width: 36px; height: 46px; border-radius: 4px; overflow: hidden;
+  display: grid; place-items: center;
+}
+.vignette:empty { visibility: hidden; }
+.vignette img { width: 100%; height: 100%; object-fit: cover; }
+.titre { font-weight: 700; display: block; }
+.sous { color: var(--muted); font-size: .9rem; }
+.puces { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.puce {
+  font-size: .8rem; padding: 2px 8px; border-radius: 4px;
+  border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
+}
+.puce.forte { background: var(--tag); color: var(--tag-ink); border-color: transparent; }
+.plus { display: block; margin: 18px auto 0; }
+.btn {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 8px;
+  padding: 10px 18px; cursor: pointer;
+}
+.btn:hover { background: var(--hover); }
+.vide, .erreur { padding: 40px 20px; text-align: center; color: var(--muted); }
+.erreur { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin-top: 24px; }
+.erreur strong { color: var(--ink); display: block; margin-bottom: 8px; }
+
+/* Fiche d'un jeu */
+dialog {
+  width: min(760px, calc(100vw - 24px)); max-height: calc(100dvh - 24px);
+  border: 0; border-radius: 14px; padding: 0;
+  background: var(--surface); color: var(--ink);
+}
+dialog::backdrop { background: rgb(10 12 24 / .6); }
+.fiche-tete { display: flex; gap: 12px; align-items: flex-start; padding: 22px 22px 0; border-top: 8px solid var(--c); }
+.fiche-tete h2 { font: 800 1.7rem/1.1 var(--display); margin: 0; flex: 1; }
+.fiche-tete p { margin: 6px 0 0; color: var(--muted); }
+.fermer {
+  border: 0; background: var(--hover); width: 36px; height: 36px; border-radius: 50%;
+  cursor: pointer; font-size: 1.3rem; line-height: 1; flex: none;
+}
+.fiche-corps { padding: 18px 22px 24px; }
+.galerie-principale {
+  background: var(--hover); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  height: min(60vh, 520px); overflow: hidden;
+}
+.galerie-principale img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.galerie { position: relative; }
+.galerie-principale a { display: contents; }
+.galerie-principale span { color: var(--muted); padding: 20px; text-align: center; }
+.nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 42px; height: 42px; border-radius: 50%; border: 0; cursor: pointer;
+  background: var(--surface); color: var(--ink); font-size: 1.6rem; line-height: 1;
+  box-shadow: 0 1px 4px rgb(0 0 0 / .25);
+}
+.nav.prec { left: 10px; } .nav.suiv { right: 10px; }
+.num {
+  position: absolute; right: 10px; bottom: 10px; font-size: .85rem;
+  background: var(--surface); padding: 2px 8px; border-radius: 4px;
+}
+.miniatures button.manque img { display: none; }
+.miniatures button.manque::after { content: "?"; display: grid; place-items: center; height: 100%; color: var(--muted); }
+.miniatures { display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; padding-bottom: 4px; }
+.miniatures button {
+  flex: none; width: 56px; height: 56px; padding: 0; border-radius: 6px; overflow: hidden;
+  border: 2px solid transparent; cursor: pointer; background: var(--hover);
+}
+.miniatures button[aria-current="true"] { border-color: var(--accent); }
+.miniatures img { width: 100%; height: 100%; object-fit: cover; }
+.details { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 18px 0 0; }
+.details dt { color: var(--muted); }
+.details dd { margin: 0; }
+
+@media (max-width: 760px) {
+  .page { padding-top: 20px; }
+  .filtres { grid-template-columns: 1fr 1fr; }
+  .filtres label:first-child { grid-column: 1 / -1; }
+  .jeu { grid-template-columns: 6px 1fr; row-gap: 2px; }
+  .col-console { font-size: .85rem; }
+  .vignette { display: none; }
+  .jeu > span:not(.tranche) { grid-column: 2; }
+  .puces { justify-content: flex-start; }
+  .puces:empty { display: none; }
+  .tranche { grid-row: span 4; }
+  .entete-liste { display: none; }
+  .etats { display: flex; flex-wrap: wrap; gap: 2px 12px; grid-column: 2; }
+  .etat:empty { display: none; }
+  .etat::before { content: attr(data-l) " : "; color: var(--muted); font-weight: 400; }
+  .options .compteur { margin-left: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Mes jeux vidéo</h1>
+    <p id="resume">Chargement de la liste…</p>
+  </header>
+
+  <div id="app" hidden>
+    <section class="etagere" aria-label="Répartition par marque">
+      <div class="etagere-barre" id="etagere"></div>
+      <div class="legende" id="legende"></div>
+    </section>
+
+    <nav class="onglets" id="onglets" role="tablist" aria-label="Listes"></nav>
+
+    <div class="filtres">
+      <label>Rechercher
+        <input type="search" id="q" placeholder="Titre, code produit, commentaire…" autocomplete="off">
+      </label>
+      <label>Console
+        <select id="console"><option value="">Toutes</option></select>
+      </label>
+      <label>État général
+        <select id="etat"><option value="">Tous</option></select>
+      </label>
+      <label>Trier par
+        <select id="tri">
+          <option value="console">Console, puis titre</option>
+          <option value="titre">Titre</option>
+          <option value="photos">Jeux avec photos d’abord</option>
+        </select>
+      </label>
+    </div>
+    <div class="options">
+      <label><input type="checkbox" id="demat"> Inclure les jeux dématérialisés</label>
+      <label><input type="checkbox" id="photos"> Seulement les jeux avec photos</label>
+      <button class="lien" id="reset" type="button">Réinitialiser les filtres</button>
+      <span class="compteur" id="compteur"></span>
+    </div>
+
+    <div class="tableau" id="tableau">
+      <div class="entete-liste" aria-hidden="true">
+        <span></span><span>Console</span><span></span><span>Titre</span>
+        <span>État général</span><span>Disque</span><span>Notice</span><span>Boîte</span><span>Jaquette</span><span></span>
+      </div>
+      <ul class="liste" id="liste"></ul>
+    </div>
+    <p class="vide" id="vide" hidden>Aucun jeu ne correspond à ces filtres. Effacez la recherche ou choisissez une autre console.</p>
+  </div>
+
+  <div class="erreur" id="erreur" hidden>
+    <strong>Impossible de lire le fichier jeux.tsv.</strong>
+    Si vous ouvrez cette page directement depuis votre disque, le navigateur bloque la lecture automatique.
+    Choisissez le fichier à la main pour tester&nbsp;:
+    <p><input type="file" id="fichier" accept=".tsv,.txt,text/tab-separated-values"></p>
+  </div>
+</div>
+
+<dialog id="fiche" aria-labelledby="fiche-titre">
+  <div class="fiche-tete" id="fiche-tete">
+    <div style="flex:1">
+      <h2 id="fiche-titre"></h2>
+      <p id="fiche-sous"></p>
+    </div>
+    <button class="fermer" id="fermer" type="button" aria-label="Fermer">×</button>
+  </div>
+  <div class="fiche-corps" id="fiche-corps"></div>
+</dialog>
+
+<script>
+/* ============================================================
+   RÉGLAGES — à adapter si besoin
+   ============================================================ */
+const CONFIG = {
+  fichier: 'jeux.tsv',        // nom du fichier exporté par WinDev
+  dossierPhotos: 'photos/',   // sous-dossier des photos
+  zonesMasquees: ['255'],     // valeurs de zone à ne jamais afficher
+};
+
+// Les listes et la règle qui décide si un jeu en fait partie.
+const LISTES = [
+  { id: 'collection', nom: 'Ma collection',     test: j => j.acquis },
+  { id: 'recherches', nom: 'Mes recherches',    test: j => j.aAcheter },
+  { id: 'commande',   nom: 'Commande en cours', test: j => j.enCommande },
+  { id: 'plustard',   nom: 'Pour plus tard',    test: j => j.plusTard },
+  { id: 'notice',     nom: 'Notice manquante',  test: j => j.acquis && !j.demat && j.noticeAbsente },
+];
+
+// Couleur de tranche par marque.
+const MARQUES = [
+  { nom: 'Nintendo',  c: '#E4202E', test: s => /^(Nintendo|Game & Watch)/i.test(s) },
+  { nom: 'Sony',      c: '#3B4BA8', test: s => /^Sony/i.test(s) },
+  { nom: 'Sega',      c: '#159BD7', test: s => /^Sega/i.test(s) },
+  { nom: 'Microsoft', c: '#2E8B3E', test: s => /^Microsoft/i.test(s) },
+  { nom: 'PC',        c: '#7A8094', test: s => /^PC/i.test(s) },
+  { nom: 'Autres',    c: '#E08A2C', test: () => true },
+];
+
+/* ============================================================ */
+const $ = id => document.getElementById(id);
+const etat = { liste: 'collection', q: '', console: '', marque: '', demat: false, etat: '', photos: false, tri: 'console' };
+let JEUX = [];
+
+const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const urlPhoto = f => CONFIG.dossierPhotos + encodeURIComponent(f);
+const nb = n => n.toLocaleString('fr-FR');
+const marqueDe = c => MARQUES.find(m => m.test(c));
+
+function texteZone(z) {
+  if (z === '' || CONFIG.zonesMasquees.includes(z)) return '';
+  return z;
+}
+
+function lireTSV(texte) {
+  texte = texte.replace(/^\uFEFF/, '');
+  const lignes = texte.split(/\r?\n/).filter(l => l.trim() !== '');
+  const entetes = lignes.shift().split('\t').map(s => s.trim());
+  const col = nom => entetes.indexOf(nom);
+  const C = {};
+  ['Série', 'Titre', 'Zone', 'Code produit', 'Acquis', 'A acheter', 'En commande', 'Pour plus tard', 'Dématérialisé',
+   'Etat général', 'Etat disque', 'Etat notice', 'Etat boite', 'Etat jaquette', 'Commentaires',
+   'Photo recto', 'Photo verso'].forEach(n => C[n] = col(n));
+  const colsPhotos = [C['Photo recto'], C['Photo verso']];
+  for (let i = 1; i <= 12; i++) { const k = col('Photo supp' + i); if (k >= 0) colsPhotos.push(k); }
+
+  return lignes.map((ligne, i) => {
+    const c = ligne.split('\t');
+    const v = k => (k >= 0 && c[k] !== undefined) ? c[k].trim() : '';
+    const console_ = v(C['Série']).replace(/^<|>$/g, '').trim() || 'Sans console';
+    const j = {
+      id: i,
+      titre: v(C['Titre']) || '(sans titre)',
+      console: console_,
+      marque: marqueDe(console_),
+      zone: v(C['Zone']),
+      code: v(C['Code produit']),
+      acquis: v(C['Acquis']) === '1',
+      aAcheter: v(C['A acheter']) === '1',
+      enCommande: v(C['En commande']) === '1',
+      plusTard: v(C['Pour plus tard']) === '1',
+      demat: v(C['Dématérialisé']) === '1',
+      etatGeneral: v(C['Etat général']),
+      etatDisque: v(C['Etat disque']),
+      etatNotice: v(C['Etat notice']),
+      etatBoite: v(C['Etat boite']),
+      etatJaquette: v(C['Etat jaquette']),
+      commentaires: v(C['Commentaires']),
+      photos: colsPhotos.map(v).filter(Boolean),
+    };
+    // Notice absente, sauf pour les jeux « loose » (boîte et jaquette absentes aussi)
+    j.loose = j.etatBoite === 'Absente' && j.etatJaquette === 'Absente';
+    j.noticeAbsente = j.etatNotice === 'Absente' && !j.loose;
+    j.cherche = norm([j.titre, j.console, j.code, j.commentaires].join(' '));
+    return j;
+  });
+}
+
+/* ---------- Filtrage ---------- */
+function passeFiltres(j, sauf) {
+  if (sauf !== 'liste' && !LISTES.find(l => l.id === etat.liste).test(j)) return false;
+  if (sauf !== 'marque' && etat.marque && j.marque.nom !== etat.marque) return false;
+  if (etat.console && j.console !== etat.console) return false;
+  if (!etat.demat && j.demat) return false;
+  if (etat.etat && j.etatGeneral !== etat.etat) return false;
+  if (etat.photos && !j.photos.length) return false;
+  if (etat.q) {
+    const mots = norm(etat.q).split(/\s+/).filter(Boolean);
+    if (!mots.every(m => j.cherche.includes(m))) return false;
+  }
+  return true;
+}
+
+const coll = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
+function trier(t) {
+  const parTitre = (a, b) => coll.compare(a.titre, b.titre);
+  if (etat.tri === 'console') return t.sort((a, b) => coll.compare(a.console, b.console) || parTitre(a, b));
+  if (etat.tri === 'photos') return t.sort((a, b) => (b.photos.length > 0) - (a.photos.length > 0) || parTitre(a, b));
+  return t.sort(parTitre);
+}
+
+/* ---------- Affichage ---------- */
+function vignette(j) {
+  if (!j.photos.length) return '<span class="vignette" aria-hidden="true"></span>';
+  return `<span class="vignette" aria-hidden="true"><img loading="lazy" src="${esc(urlPhoto(j.photos[0]))}" alt=""></span>`;
+}
+
+function celluleEtat(libelle, v) {
+  let cl = '';
+  if (/^(Neuf|Scellé)/i.test(v)) cl = ' top';
+  else if (/^(Absente|Mauvais|Cassée|HS|Moyen|Rayé)/i.test(v)) cl = ' alerte';
+  return `<span class="etat${cl}" data-l="${libelle}">${esc(v)}</span>`;
+}
+
+function puces(j) {
+  const p = [];
+  if (j.demat) p.push('<span class="puce">Dématérialisé</span>');
+  return p.join('');
+}
+
+function rendreOnglets() {
+  $('onglets').innerHTML = LISTES.map(l => {
+    const n = JEUX.reduce((s, j) => s + (l.test(j) && passeFiltres(j, 'liste') ? 1 : 0), 0);
+    const sel = l.id === etat.liste;
+    return `<button role="tab" aria-selected="${sel}" data-liste="${l.id}">${l.nom}<b>${nb(n)}</b></button>`;
+  }).join('');
+}
+
+function rendreEtagere(base) {
+  const total = base.length || 1;
+  const comptes = MARQUES.map(m => ({ m, n: base.filter(j => j.marque === m).length })).filter(x => x.n);
+  $('etagere').classList.toggle('filtre', !!etat.marque);
+  $('etagere').innerHTML = comptes.map(({ m, n }) =>
+    `<button style="--c:${m.c};flex:${n / total}" data-marque="${m.nom}" aria-pressed="${etat.marque === m.nom}" title="${m.nom} : ${nb(n)} jeux" aria-label="${m.nom}, ${nb(n)} jeux"></button>`
+  ).join('');
+  $('legende').innerHTML = comptes.map(({ m, n }) =>
+    `<button style="--c:${m.c}" data-marque="${m.nom}" aria-pressed="${etat.marque === m.nom}"><i></i>${m.nom} ${nb(n)}</button>`
+  ).join('');
+}
+
+function rendre() {
+  const base = JEUX.filter(j => passeFiltres(j, 'marque'));
+  const res = trier(base.filter(j => !etat.marque || j.marque.nom === etat.marque));
+  rendreOnglets();
+  rendreEtagere(base);
+
+  $('liste').innerHTML = res.map(j => {
+    const z = texteZone(j.zone);
+    return `<li><button class="jeu" data-id="${j.id}">
+      <span class="tranche" style="--c:${j.marque.c}"></span>
+      <span class="col-console">${esc(j.console)}</span>
+      ${vignette(j)}
+      <span><span class="titre">${esc(j.titre)}</span>${z ? `<span class="sous">${esc(z)}</span>` : ''}</span>
+      <span class="etats">${celluleEtat('Général', j.etatGeneral)}${celluleEtat('Disque', j.etatDisque)}${celluleEtat('Notice', j.etatNotice)}${celluleEtat('Boîte', j.etatBoite)}${celluleEtat('Jaquette', j.etatJaquette)}</span>
+      <span class="puces">${puces(j)}</span>
+    </button></li>`;
+  }).join('');
+  $('tableau').hidden = !res.length;
+  $('vide').hidden = !!res.length;
+  $('compteur').textContent = res.length === 1 ? '1 jeu' : nb(res.length) + ' jeux';
+}
+
+/* ---------- Fiche détaillée ---------- */
+let ficheJeu = null, photoActive = 0;
+function montrerPhoto(i) {
+  const j = ficheJeu; if (!j || !j.photos.length || !$('grande')) return;
+  photoActive = (i + j.photos.length) % j.photos.length;
+  const url = urlPhoto(j.photos[photoActive]);
+  $('grande').src = url;
+  $('grande').alt = `Photo ${photoActive + 1} de ${j.titre}`;
+  $('lien-grande').href = url;
+  if ($('num')) $('num').textContent = `${photoActive + 1} / ${j.photos.length}`;
+  $('fiche').querySelectorAll('[data-photo]').forEach(x => x.setAttribute('aria-current', +x.dataset.i === photoActive));
+}
+
+function ouvrirFiche(j) {
+  $('fiche-tete').style.setProperty('--c', j.marque.c);
+  $('fiche-titre').textContent = j.titre;
+  const listes = LISTES.filter(l => l.test(j)).map(l => l.nom);
+  $('fiche-sous').textContent = [j.console, listes.join(', ')].filter(Boolean).join(' / ');
+
+  let html = '';
+  if (j.photos.length) {
+    const n = j.photos.length;
+    html += `<div class="galerie">
+      <div class="galerie-principale"><a id="lien-grande" href="${esc(urlPhoto(j.photos[0]))}" target="_blank" rel="noopener" title="Ouvrir la photo en grand"><img id="grande" onload="this.hidden=false;document.getElementById('grande-absente').hidden=true" src="${esc(urlPhoto(j.photos[0]))}" alt="Photo 1 de ${esc(j.titre)}"></a><span id="grande-absente" hidden>Photo introuvable dans le dossier photos/</span></div>
+      ${n > 1 ? `<button class="nav prec" type="button" data-pas="-1" aria-label="Photo précédente">‹</button>
+      <button class="nav suiv" type="button" data-pas="1" aria-label="Photo suivante">›</button>
+      <span class="num" id="num">1 / ${n}</span>` : ''}
+    </div>`;
+    if (j.photos.length > 1) {
+      html += '<div class="miniatures">' + j.photos.map((p, i) =>
+        `<button data-photo="${esc(urlPhoto(p))}" data-i="${i}" aria-current="${i === 0}" aria-label="Photo ${i + 1}"><img loading="lazy" src="${esc(urlPhoto(p))}" alt=""></button>`
+      ).join('') + '</div>';
+    }
+  }
+  const lignes = [
+    ['Support', j.demat ? 'Dématérialisé' : 'Physique'],
+    ['Zone', texteZone(j.zone)],
+    ['Code produit', j.code],
+    ['État général', j.etatGeneral],
+    ['Disque', j.etatDisque],
+    ['Notice', j.etatNotice],
+    ['Boîte', j.etatBoite],
+    ['Jaquette', j.etatJaquette],
+    ['Commentaires', j.commentaires],
+  ].filter(([, v]) => v);
+  html += '<dl class="details">' + lignes.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('') + '</dl>';
+  $('fiche-corps').innerHTML = html;
+  ficheJeu = j; photoActive = 0;
+  $('fiche').showModal();
+}
+
+/* ---------- Événements ---------- */
+function brancher() {
+  const consoles = [...new Set(JEUX.map(j => j.console))];
+  $('console').innerHTML += MARQUES.map(m => {
+    const liste = consoles.filter(c => marqueDe(c) === m).sort(coll.compare);
+    return liste.length ? `<optgroup label="${m.nom}">${liste.map(c => `<option>${esc(c)}</option>`).join('')}</optgroup>` : '';
+  }).join('');
+  const ordreEtats = ['Neuf', 'Scellé', 'Très bon', 'Bon', 'Moyen', 'Mauvais'];
+  const etats = [...new Set(JEUX.map(j => j.etatGeneral).filter(Boolean))]
+    .sort((a, b) => (ordreEtats.indexOf(a) + 99) % 99 - (ordreEtats.indexOf(b) + 99) % 99);
+  $('etat').innerHTML += etats.map(e => `<option>${esc(e)}</option>`).join('');
+
+  const maj = () => rendre();
+  let minuteur;
+  $('q').addEventListener('input', e => { clearTimeout(minuteur); minuteur = setTimeout(() => { etat.q = e.target.value; maj(); }, 150); });
+  ['console', 'etat', 'tri'].forEach(id => $(id).addEventListener('change', e => { etat[id] = e.target.value; maj(); }));
+  $('photos').addEventListener('change', e => { etat.photos = e.target.checked; maj(); });
+  $('demat').addEventListener('change', e => { etat.demat = e.target.checked; maj(); });
+
+  $('onglets').addEventListener('click', e => {
+    const b = e.target.closest('[data-liste]'); if (!b) return;
+    etat.liste = b.dataset.liste;
+    history.replaceState(null, '', '#' + etat.liste);
+    maj();
+  });
+  const choixMarque = e => {
+    const b = e.target.closest('[data-marque]'); if (!b) return;
+    etat.marque = etat.marque === b.dataset.marque ? '' : b.dataset.marque;
+    maj();
+  };
+  $('etagere').addEventListener('click', choixMarque);
+  $('legende').addEventListener('click', choixMarque);
+
+  $('reset').addEventListener('click', () => {
+    Object.assign(etat, { q: '', console: '', marque: '', demat: false, etat: '', photos: false });
+    $('q').value = ''; $('console').value = ''; $('etat').value = ''; $('photos').checked = false; $('demat').checked = false;
+    maj();
+  });
+
+  $('liste').addEventListener('click', e => {
+    const b = e.target.closest('[data-id]');
+    if (b) ouvrirFiche(JEUX[+b.dataset.id]);
+  });
+  // Photo introuvable : on remet les initiales
+  $('liste').addEventListener('error', e => {
+    if (e.target.tagName === 'IMG') e.target.parentElement.textContent = '';
+  }, true);
+
+  // Photo introuvable dans la fiche
+  $('fiche').addEventListener('error', e => {
+    if (e.target.id === 'grande') { e.target.hidden = true; $('grande-absente').hidden = false; }
+    else if (e.target.tagName === 'IMG') e.target.parentElement.classList.add('manque');
+  }, true);
+  $('fermer').addEventListener('click', () => $('fiche').close());
+  $('fiche').addEventListener('click', e => {
+    if (e.target === $('fiche')) $('fiche').close();
+    const m = e.target.closest('[data-photo]');
+    if (m) montrerPhoto(+m.dataset.i);
+    const nav = e.target.closest('[data-pas]');
+    if (nav) montrerPhoto(photoActive + +nav.dataset.pas);
+  });
+  $('fiche').addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') montrerPhoto(photoActive + 1);
+    if (e.key === 'ArrowLeft') montrerPhoto(photoActive - 1);
+  });
+  window.addEventListener('hashchange', lireHash);
+}
+
+function lireHash() {
+  const h = location.hash.slice(1);
+  if (LISTES.some(l => l.id === h)) { etat.liste = h; if (JEUX.length) rendre(); }
+}
+
+function demarrer(texte) {
+  JEUX = lireTSV(texte);
+  const nbConsoles = new Set(JEUX.map(j => j.console)).size;
+  $('resume').textContent = `${nb(JEUX.length)} jeux sur ${nbConsoles} consoles et plateformes.`;
+  $('erreur').hidden = true;
+  $('app').hidden = false;
+  brancher();
+  lireHash();
+  rendre();
+}
+
+fetch(CONFIG.fichier, { cache: 'no-cache' })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .then(demarrer)
+  .catch(() => {
+    $('resume').textContent = '';
+    $('erreur').hidden = false;
+  });
+
+$('fichier').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const lecteur = new FileReader();
+  lecteur.onload = () => demarrer(lecteur.result);
+  lecteur.readAsText(f, 'utf-8');
+});
+</script>
+</body>
+</html>
