@@ -126,6 +126,13 @@ header p { margin: 0; color: var(--muted); }
   border-bottom: 1px solid var(--line); background: var(--surface);
   position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; border-radius: 10px 10px 0 0;
 }
+.tableau.avec-prix .jeu, .tableau.avec-prix .entete-liste {
+  --cols: 6px 150px 36px minmax(200px, 1fr) repeat(5, 104px) 96px 110px;
+}
+.tableau:not(.avec-prix) .col-prix { display: none; }
+.col-prix { text-align: right; font-variant-numeric: tabular-nums; }
+.jeu .col-prix { font-weight: 700; }
+.col-prix.sans { color: var(--muted); font-weight: 400; }
 .etats { display: contents; }
 .etat { font-size: .85rem; line-height: 1.3; }
 .etat.top { font-weight: 700; }
@@ -133,6 +140,7 @@ header p { margin: 0; color: var(--muted); }
 @media (max-width: 1150px) and (min-width: 761px) {
   .tableau { overflow-x: auto; }
   .entete-liste, .liste { min-width: 1060px; }
+  .tableau.avec-prix .entete-liste, .tableau.avec-prix .liste { min-width: 1170px; }
   .entete-liste { position: static; }
 }
 .liste li + li { border-top: 1px solid var(--line); }
@@ -226,7 +234,10 @@ dialog::backdrop { background: rgb(10 12 24 / .6); }
   .jeu > span:not(.tranche) { grid-column: 2; }
   .puces { justify-content: flex-start; }
   .puces:empty { display: none; }
-  .tranche { grid-row: span 4; }
+  .tranche { grid-row: span 5; }
+  .jeu .col-prix { text-align: left; }
+  .jeu .col-prix::before { content: attr(data-l) " : "; color: var(--muted); font-weight: 400; }
+  .jeu .col-prix.sans { display: none; }
   .entete-liste { display: none; }
   .etats { display: flex; flex-wrap: wrap; gap: 2px 12px; grid-column: 2; }
   .etat:empty { display: none; }
@@ -266,6 +277,7 @@ dialog::backdrop { background: rgb(10 12 24 / .6); }
           <option value="console">Console, puis titre</option>
           <option value="titre">Titre</option>
           <option value="photos">Jeux avec photos d’abord</option>
+          <option value="prix">Prix, du plus cher au moins cher</option>
         </select>
       </label>
     </div>
@@ -279,7 +291,7 @@ dialog::backdrop { background: rgb(10 12 24 / .6); }
     <div class="tableau" id="tableau">
       <div class="entete-liste" aria-hidden="true">
         <span></span><span>Console</span><span></span><span>Titre</span>
-        <span>État général</span><span>Disque</span><span>Notice</span><span>Boîte</span><span>Jaquette</span><span></span>
+        <span>État général</span><span>Disque</span><span>Notice</span><span>Boîte</span><span>Jaquette</span><span class="col-prix" id="entete-prix">Prix</span><span></span>
       </div>
       <ul class="liste" id="liste"></ul>
     </div>
@@ -316,9 +328,13 @@ const CONFIG = {
 };
 
 // Les listes et la règle qui décide si un jeu en fait partie.
+// « prix » : champ affiché dans une colonne Prix pour cette liste (facultatif).
 const LISTES = [
   { id: 'collection', nom: 'Ma collection',     test: j => j.acquis },
-  { id: 'recherches', nom: 'Mes recherches',    test: j => j.aAcheter },
+  { id: 'avendre',    nom: 'À vendre',          test: j => j.aVendre,
+    prix: 'prixVente', libellePrix: 'Prix de vente' },
+  { id: 'recherches', nom: 'Mes recherches',    test: j => j.aAcheter,
+    prix: 'prixVu',    libellePrix: 'Prix constaté' },
   { id: 'commande',   nom: 'Commande en cours', test: j => j.enCommande },
   { id: 'plustard',   nom: 'Pour plus tard',    test: j => j.plusTard },
   { id: 'notice',     nom: 'Notice manquante',  test: j => j.acquis && !j.demat && j.noticeAbsente },
@@ -344,6 +360,11 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const urlPhoto = f => CONFIG.dossierPhotos + encodeURIComponent(f);
 const nb = n => n.toLocaleString('fr-FR');
 const marqueDe = c => MARQUES.find(m => m.test(c));
+const euros = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+const prixTexte = n => n > 0 ? euros.format(n) : '';
+// « 8.83 », « 8,83 », « 1 234,50 € » → nombre ; vide ou 0 → 0
+const lirePrix = t => { const n = parseFloat(String(t).replace(/[\s\u00a0€]/g, '').replace(',', '.')); return isFinite(n) && n > 0 ? n : 0; };
+const listeActive = () => LISTES.find(l => l.id === etat.liste);
 
 function texteZone(z) {
   if (z === '' || CONFIG.zonesMasquees.includes(z)) return '';
@@ -361,6 +382,16 @@ function lireTSV(texte) {
    'Photo recto', 'Photo verso'].forEach(n => C[n] = col(n));
   const colsPhotos = [C['Photo recto'], C['Photo verso']];
   for (let i = 1; i <= 12; i++) { const k = col('Photo supp' + i); if (k >= 0) colsPhotos.push(k); }
+
+  // Les 3 colonnes ajoutées en fin de fichier : on les cherche par leur nom,
+  // sinon (en-tête sans nom) on les prend juste après la dernière colonne nommée.
+  const cle = s => norm(s).replace(/[^a-z]/g, '');
+  const trouve = re => entetes.findIndex(e => re.test(cle(e)));
+  const nbNommees = entetes.filter(Boolean).length;
+  let kVendre = trouve(/^avendre$/), kPrixVente = trouve(/^prix(de)?vente$/), kPrixVu = trouve(/^prix(vue?|constatee?)$/);
+  if (kVendre < 0) kVendre = nbNommees;
+  if (kPrixVente < 0) kPrixVente = nbNommees + 1;
+  if (kPrixVu < 0) kPrixVu = nbNommees + 2;
 
   return lignes.map((ligne, i) => {
     const c = ligne.split('\t');
@@ -385,6 +416,9 @@ function lireTSV(texte) {
       etatJaquette: v(C['Etat jaquette']),
       commentaires: v(C['Commentaires']),
       photos: colsPhotos.map(v).filter(Boolean),
+      aVendre: v(kVendre) === '1',
+      prixVente: lirePrix(v(kPrixVente)),
+      prixVu: lirePrix(v(kPrixVu)),
     };
     // Notice absente, sauf pour les jeux « loose » (boîte et jaquette absentes aussi)
     j.loose = j.etatBoite === 'Absente' && j.etatJaquette === 'Absente';
@@ -413,6 +447,10 @@ const coll = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
 function trier(t) {
   const parTitre = (a, b) => coll.compare(a.titre, b.titre);
   if (etat.tri === 'console') return t.sort((a, b) => coll.compare(a.console, b.console) || parTitre(a, b));
+  if (etat.tri === 'prix') {
+    const champ = listeActive().prix || 'prixVente';
+    return t.sort((a, b) => (b[champ] || -1) - (a[champ] || -1) || parTitre(a, b));
+  }
   if (etat.tri === 'photos') return t.sort((a, b) => (b.photos.length > 0) - (a.photos.length > 0) || parTitre(a, b));
   return t.sort(parTitre);
 }
@@ -433,6 +471,7 @@ function celluleEtat(libelle, v) {
 function puces(j) {
   const p = [];
   if (j.demat) p.push('<span class="puce">Dématérialisé</span>');
+  if (j.aVendre && etat.liste !== 'avendre') p.push('<span class="puce forte">À vendre</span>');
   return p.join('');
 }
 
@@ -461,6 +500,14 @@ function rendre() {
   const res = trier(base.filter(j => !etat.marque || j.marque.nom === etat.marque));
   rendreOnglets();
   rendreEtagere(base);
+  const L = listeActive();
+  $('tableau').classList.toggle('avec-prix', !!L.prix);
+  $('entete-prix').textContent = L.libellePrix || 'Prix';
+  const cellPrix = j => {
+    if (!L.prix) return '';
+    const t = prixTexte(j[L.prix]);
+    return `<span class="col-prix${t ? '' : ' sans'}" data-l="${L.libellePrix}">${t || '—'}</span>`;
+  };
 
   $('liste').innerHTML = res.map(j => {
     const z = texteZone(j.zone);
@@ -470,12 +517,18 @@ function rendre() {
       ${vignette(j)}
       <span><span class="titre">${esc(j.titre)}</span>${z ? `<span class="sous">${esc(z)}</span>` : ''}</span>
       <span class="etats">${celluleEtat('Général', j.etatGeneral)}${celluleEtat('Disque', j.etatDisque)}${celluleEtat('Notice', j.etatNotice)}${celluleEtat('Boîte', j.etatBoite)}${celluleEtat('Jaquette', j.etatJaquette)}</span>
+      ${cellPrix(j)}
       <span class="puces">${puces(j)}</span>
     </button></li>`;
   }).join('');
   $('tableau').hidden = !res.length;
   $('vide').hidden = !!res.length;
-  $('compteur').textContent = res.length === 1 ? '1 jeu' : nb(res.length) + ' jeux';
+  let compte = res.length === 1 ? '1 jeu' : nb(res.length) + ' jeux';
+  if (L.prix) {
+    const total = res.reduce((s, j) => s + j[L.prix], 0);
+    if (total > 0) compte += ` (${L.libellePrix.toLowerCase()} total : ${euros.format(total)})`;
+  }
+  $('compteur').textContent = compte;
 }
 
 /* ---------- Fiche détaillée ---------- */
@@ -521,6 +574,9 @@ function ouvrirFiche(j) {
     ['Notice', j.etatNotice],
     ['Boîte', j.etatBoite],
     ['Jaquette', j.etatJaquette],
+    ['À vendre', j.aVendre ? 'Oui' : ''],
+    ['Prix de vente', prixTexte(j.prixVente)],
+    ['Prix constaté', j.aAcheter ? prixTexte(j.prixVu) : ''],
     ['Commentaires', j.commentaires],
   ].filter(([, v]) => v);
   html += '<dl class="details">' + lignes.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('') + '</dl>';
